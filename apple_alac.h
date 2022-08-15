@@ -37,8 +37,8 @@
 
 EXTERNC int apple_alac_init(int32_t fmtp[12]);
 EXTERNC int apple_alac_terminate();
-EXTERNC int apple_alac_decode_frame(unsigned char *sampleBuffer, uint32_t bufferLength,
-                                    unsigned char *dest, int *outsize);
+EXTERNC int apple_alac_decode_frame(unsigned char * sampleBuffer, uint32_t bufferLength,
+                                    unsigned char * dest, int * outsize);
 
 #undef EXTERNC
 

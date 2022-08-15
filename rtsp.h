@@ -3,8 +3,8 @@
 
 #include "player.h"
 
-extern rtsp_conn_info *playing_conn;
-extern rtsp_conn_info **conns;
+extern rtsp_conn_info * playing_conn;
+extern rtsp_conn_info * * conns;
 
 void rtsp_listen_loop(void);
 // void rtsp_shutdown_stream(void);
@@ -23,6 +23,6 @@ void metadata_stop(void);
 // e.g. if it's malloced, to free it, etc.
 // nothing is done automatically
 
-int send_ssnc_metadata(uint32_t code, char *data, uint32_t length, int block);
+int send_ssnc_metadata(uint32_t code, char * data, uint32_t length, int block);
 
 #endif // _RTSP_H

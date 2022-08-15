@@ -39,52 +39,60 @@
 static int fd = -1;
 
 static void start(__attribute__((unused)) int sample_rate,
-                  __attribute__((unused)) int sample_format) {
-  fd = STDOUT_FILENO;
+                  __attribute__((unused)) int sample_format)
+{
+    fd = STDOUT_FILENO;
 }
 
-static int play(void *buf, int samples) {
-  char errorstring[1024];
-  int warned = 0;
-  int rc = write(fd, buf, samples * 4);
-  if ((rc < 0) && (warned == 0)) {
-    strerror_r(errno, (char *)errorstring, 1024);
-    warn("Error %d writing to stdout: \"%s\".", errno, errorstring);
-    warned = 1;
-  }
-  return rc;
+static int play(void * buf, int samples)
+{
+    char errorstring[1024];
+    int warned = 0;
+    int rc = write(fd, buf, samples * 4);
+
+    if ((rc < 0) && (warned == 0))
+    {
+        strerror_r(errno, (char *)errorstring, 1024);
+        warn("Error %d writing to stdout: \"%s\".", errno, errorstring);
+        warned = 1;
+    }
+
+    return rc;
 }
 
-static void stop(void) {
-  // Do nothing when play stops
+static void stop(void)
+{
+    // Do nothing when play stops
 }
 
-static int init(__attribute__((unused)) int argc, __attribute__((unused)) char **argv) {
-  // set up default values first
-  config.audio_backend_buffer_desired_length = 1.0;
-  config.audio_backend_latency_offset = 0;
+static int init(__attribute__((unused)) int argc, __attribute__((unused)) char * * argv)
+{
+    // set up default values first
+    config.audio_backend_buffer_desired_length = 1.0;
+    config.audio_backend_latency_offset = 0;
 
-  // get settings from settings file
-  // do the "general" audio  options. Note, these options are in the "general" stanza!
-  parse_general_audio_options();
-  return 0;
+    // get settings from settings file
+    // do the "general" audio  options. Note, these options are in the "general" stanza!
+    parse_general_audio_options();
+    return 0;
 }
 
-static void deinit(void) {
-  // don't close stdout
+static void deinit(void)
+{
+    // don't close stdout
 }
 
-audio_output audio_stdout = {.name = "stdout",
-                             .help = NULL,
-                             .init = &init,
-                             .deinit = &deinit,
-                             .prepare = NULL,
-                             .start = &start,
-                             .stop = &stop,
-                             .is_running = NULL,
-                             .flush = NULL,
-                             .delay = NULL,
-                             .play = &play,
-                             .volume = NULL,
-                             .parameters = NULL,
-                             .mute = NULL};
+audio_output audio_stdout = { .name       = "stdout",
+                              .help       = NULL,
+                              .init       = &init,
+                              .deinit     = &deinit,
+                              .prepare    = NULL,
+                              .start      = &start,
+                              .stop       = &stop,
+                              .is_running = NULL,
+                              .flush      = NULL,
+                              .delay      = NULL,
+                              .play       = &play,
+                              .volume     = NULL,
+                              .parameters = NULL,
+                              .mute       = NULL };

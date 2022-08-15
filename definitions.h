@@ -15,7 +15,7 @@
 #include <TargetConditionals.h>
 #if TARGET_OS_MAC == 1
 /* OSX */
-#define COMPILE_FOR_OSX 1
+#define COMPILE_FOR_OSX                                      1
 #endif
 #endif
 
@@ -25,11 +25,11 @@
 
 // struct sockaddr_in6 is bigger than struct sockaddr. derp
 #ifdef AF_INET6
-#define SOCKADDR struct sockaddr_storage
-#define SAFAMILY ss_family
+#define SOCKADDR                                             struct sockaddr_storage
+#define SAFAMILY                                             ss_family
 #else
-#define SOCKADDR struct sockaddr
-#define SAFAMILY sa_family
+#define SOCKADDR                                             struct sockaddr
+#define SAFAMILY                                             sa_family
 #endif
 
 #endif // _DEFINITIONS_H

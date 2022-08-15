@@ -33,66 +33,74 @@
 
 static DNSServiceRef service;
 
-static int mdns_dns_sd_register(char *apname, int port) {
-  char *recordwithoutmetadata[] = {MDNS_RECORD_WITHOUT_METADATA, NULL};
+static int mdns_dns_sd_register(char * apname, int port)
+{
+    char * recordwithoutmetadata[] = { MDNS_RECORD_WITHOUT_METADATA, NULL };
+
 #ifdef CONFIG_METADATA
-  char *recordwithmetadata[] = {MDNS_RECORD_WITH_METADATA, NULL};
+    char * recordwithmetadata[] = { MDNS_RECORD_WITH_METADATA, NULL };
 #endif
-  char **record;
+    char * * record;
 #ifdef CONFIG_METADATA
-  if (config.metadata_enabled)
-    record = recordwithmetadata;
-  else
+
+    if (config.metadata_enabled) record = recordwithmetadata;
+    else
 #endif
     record = recordwithoutmetadata;
 
-  uint16_t length = 0;
-  char **field;
+    uint16_t length = 0;
+    char * * field;
 
-  // Concatenate string contained i record into buf.
+    // Concatenate string contained i record into buf.
 
-  for (field = record; *field; field++) {
-    length += strlen(*field) + 1; // One byte for length each time
-  }
+    for (field = record; *field; field++)
+    {
+        length += strlen(*field) + 1; // One byte for length each time
+    }
 
-  char *buf = malloc(length * sizeof(char));
-  if (buf == NULL) {
-    warn("dns_sd: buffer record allocation failed");
-    return -1;
-  }
+    char * buf = malloc(length * sizeof(char));
 
-  char *p = buf;
+    if (buf == NULL)
+    {
+        warn("dns_sd: buffer record allocation failed");
+        return -1;
+    }
 
-  for (field = record; *field; field++) {
-    char *newp = stpcpy(p + 1, *field);
-    *p = newp - p - 1;
-    p = newp;
-  }
+    char * p = buf;
 
-  DNSServiceErrorType error;
-  error = DNSServiceRegister(&service, 0, kDNSServiceInterfaceIndexAny, apname, config.regtype, "",
-                             NULL, htons((uint16_t)port), length, buf, NULL, NULL);
+    for (field = record; *field; field++)
+    {
+        char * newp = stpcpy(p + 1, *field);
+        *p = newp - p - 1;
+        p = newp;
+    }
 
-  free(buf);
+    DNSServiceErrorType error;
+    error = DNSServiceRegister(&service, 0, kDNSServiceInterfaceIndexAny, apname, config.regtype, "",
+                               NULL, htons((uint16_t)port), length, buf, NULL, NULL);
 
-  if (error == kDNSServiceErr_NoError)
-    return 0;
-  else {
-    warn("dns-sd: DNSServiceRegister error %d", error);
-    return -1;
-  }
+    free(buf);
+
+    if (error == kDNSServiceErr_NoError) return 0;
+    else
+    {
+        warn("dns-sd: DNSServiceRegister error %d", error);
+        return -1;
+    }
 }
 
-static void mdns_dns_sd_unregister(void) {
-  if (service) {
-    DNSServiceRefDeallocate(service);
-    service = NULL;
-  }
+static void mdns_dns_sd_unregister(void)
+{
+    if (service)
+    {
+        DNSServiceRefDeallocate(service);
+        service = NULL;
+    }
 }
 
-mdns_backend mdns_dns_sd = {.name = "dns-sd",
-                            .mdns_register = mdns_dns_sd_register,
-                            .mdns_unregister = mdns_dns_sd_unregister,
-                            .mdns_dacp_monitor_start = NULL,
-                            .mdns_dacp_monitor_set_id = NULL,
-                            .mdns_dacp_monitor_stop = NULL};
+mdns_backend mdns_dns_sd = { .name                     = "dns-sd",
+                             .mdns_register            = mdns_dns_sd_register,
+                             .mdns_unregister          = mdns_dns_sd_unregister,
+                             .mdns_dacp_monitor_start  = NULL,
+                             .mdns_dacp_monitor_set_id = NULL,
+                             .mdns_dacp_monitor_stop   = NULL };

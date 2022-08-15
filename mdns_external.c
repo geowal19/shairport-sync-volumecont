@@ -40,132 +40,162 @@ int mdns_pid = 0;
  * Return the pid of the new process upon success, or -1 if something failed.
  * Check errno for error details.
  */
-static int fork_execvp(const char *file, char *const argv[]) {
-  int execpipe[2];
-  int response = -1;
-  if (pipe(execpipe) >= 0) {
+static int fork_execvp(const char * file, char * const argv[])
+{
+    int execpipe[2];
+    int response = -1;
 
-    if (fcntl(execpipe[1], F_SETFD, fcntl(execpipe[1], F_GETFD) | FD_CLOEXEC) < 0) {
-      close(execpipe[0]);
-      close(execpipe[1]);
-    } else {
-
-      int pid = fork();
-      if (pid < 0) {
-        close(execpipe[0]);
-        close(execpipe[1]);
-      } else if (pid == 0) { // Child
-        close(execpipe[0]);  // Close the read end
-        execvp(file, argv);
-        // If we reach this point then execve has failed.
-        // Write erno's value into the pipe and exit.
-        if (write(execpipe[1], &errno, sizeof(errno)) != sizeof(errno))
-          debug(1,
-                "Execve has failed and there was a further error writing an error message, duh.");
-        die("mdns_external: execve has failed.");
-      } else {              // Parent
-        close(execpipe[1]); // Close the write end
-
-        int childErrno;
-        // Block until child closes the pipe or sends errno.
-        if (read(execpipe[0], &childErrno, sizeof(childErrno)) ==
-            sizeof(childErrno)) { // We received errno
-          errno = childErrno;
-        } else {
-          response = pid;
+    if (pipe(execpipe) >= 0)
+    {
+        if (fcntl(execpipe[1], F_SETFD, fcntl(execpipe[1], F_GETFD) | FD_CLOEXEC) < 0)
+        {
+            close(execpipe[0]);
+            close(execpipe[1]);
         }
-      }
+        else
+        {
+            int pid = fork();
+
+            if (pid < 0)
+            {
+                close(execpipe[0]);
+                close(execpipe[1]);
+            }
+            else if (pid == 0) // Child
+            {
+                close(execpipe[0]); // Close the read end
+                execvp(file, argv);
+
+                // If we reach this point then execve has failed.
+                // Write erno's value into the pipe and exit.
+                if (write(execpipe[1], &errno, sizeof(errno)) != sizeof(errno)) debug(1,
+                                                                                      "Execve has failed and there was a further error writing an error message, duh.");
+
+                die("mdns_external: execve has failed.");
+            }
+            else            // Parent
+            {
+                close(execpipe[1]); // Close the write end
+
+                int childErrno;
+
+                // Block until child closes the pipe or sends errno.
+                if (read(execpipe[0], &childErrno, sizeof(childErrno)) ==
+                    sizeof(childErrno)) // We received errno
+                {
+                    errno = childErrno;
+                }
+                else
+                {
+                    response = pid;
+                }
+            }
+        }
     }
-  }
-  return response;
+
+    return response;
 }
 
-static int mdns_external_avahi_register(char *apname, __attribute__((unused)) int port) {
-  char mdns_port[6];
-  snprintf(mdns_port, sizeof(mdns_port), "%d", config.port);
+static int mdns_external_avahi_register(char * apname, __attribute__((unused)) int port)
+{
+    char mdns_port[6];
 
-  char *argvwithoutmetadata[] = {
-      NULL, apname, config.regtype, mdns_port, MDNS_RECORD_WITHOUT_METADATA, NULL};
+    snprintf(mdns_port, sizeof(mdns_port), "%d", config.port);
+
+    char * argvwithoutmetadata[] = {
+        NULL, apname, config.regtype, mdns_port, MDNS_RECORD_WITHOUT_METADATA, NULL
+    };
+
 #ifdef CONFIG_METADATA
-  char *argvwithmetadata[] = {NULL, apname, config.regtype, mdns_port, MDNS_RECORD_WITH_METADATA,
-                              NULL};
+    char * argvwithmetadata[] = { NULL, apname, config.regtype, mdns_port, MDNS_RECORD_WITH_METADATA,
+                                  NULL };
 #endif
-  char **argv;
+    char * * argv;
 
 #ifdef CONFIG_METADATA
-  if (config.metadata_enabled)
-    argv = argvwithmetadata;
-  else
+
+    if (config.metadata_enabled) argv = argvwithmetadata;
+    else
 #endif
     argv = argvwithoutmetadata;
 
-  argv[0] = "avahi-publish-service";
-  int pid = fork_execvp(argv[0], argv);
-  if (pid >= 0) {
-    mdns_pid = pid;
-    return 0;
-  } else
-    warn("Calling %s failed !", argv[0]);
+    argv[0] = "avahi-publish-service";
+    int pid = fork_execvp(argv[0], argv);
 
-  argv[0] = "mDNSPublish";
-  pid = fork_execvp(argv[0], argv);
-  if (pid >= 0) {
-    mdns_pid = pid;
-    return 0;
-  } else
-    warn("Calling %s failed !", argv[0]);
+    if (pid >= 0)
+    {
+        mdns_pid = pid;
+        return 0;
+    }
+    else warn("Calling %s failed !", argv[0]);
 
-  // If we reach here, both execvp calls failed.
-  return -1;
+    argv[0] = "mDNSPublish";
+    pid = fork_execvp(argv[0], argv);
+
+    if (pid >= 0)
+    {
+        mdns_pid = pid;
+        return 0;
+    }
+    else warn("Calling %s failed !", argv[0]);
+
+    // If we reach here, both execvp calls failed.
+    return -1;
 }
 
-static int mdns_external_dns_sd_register(char *apname, __attribute__((unused)) int port) {
-  char mdns_port[6];
-  snprintf(mdns_port, sizeof(mdns_port), "%d", config.port);
+static int mdns_external_dns_sd_register(char * apname, __attribute__((unused)) int port)
+{
+    char mdns_port[6];
 
-  char *argvwithoutmetadata[] = {
-      NULL, apname, config.regtype, mdns_port, MDNS_RECORD_WITHOUT_METADATA, NULL};
+    snprintf(mdns_port, sizeof(mdns_port), "%d", config.port);
+
+    char * argvwithoutmetadata[] = {
+        NULL, apname, config.regtype, mdns_port, MDNS_RECORD_WITHOUT_METADATA, NULL
+    };
 
 #ifdef CONFIG_METADATA
-  char *argvwithmetadata[] = {NULL, apname, config.regtype, mdns_port, MDNS_RECORD_WITH_METADATA,
-                              NULL};
+    char * argvwithmetadata[] = { NULL, apname, config.regtype, mdns_port, MDNS_RECORD_WITH_METADATA,
+                                  NULL };
 #endif
 
-  char **argv;
+    char * * argv;
 #ifdef CONFIG_METADATA
-  if (config.metadata_enabled)
-    argv = argvwithmetadata;
-  else
+
+    if (config.metadata_enabled) argv = argvwithmetadata;
+    else
 #endif
 
     argv = argvwithoutmetadata;
 
-  int pid = fork_execvp(argv[0], argv);
-  if (pid >= 0) {
-    mdns_pid = pid;
-    return 0;
-  } else
-    warn("Calling %s failed !", argv[0]);
+    int pid = fork_execvp(argv[0], argv);
 
-  return -1;
+    if (pid >= 0)
+    {
+        mdns_pid = pid;
+        return 0;
+    }
+    else warn("Calling %s failed !", argv[0]);
+
+    return -1;
 }
 
-static void kill_mdns_child(void) {
-  if (mdns_pid)
-    kill(mdns_pid, SIGTERM);
-  mdns_pid = 0;
+static void kill_mdns_child(void)
+{
+    if (mdns_pid) kill(mdns_pid, SIGTERM);
+
+    mdns_pid = 0;
 }
 
-mdns_backend mdns_external_avahi = {.name = "external-avahi",
-                                    .mdns_register = mdns_external_avahi_register,
-                                    .mdns_unregister = kill_mdns_child,
-                                    .mdns_dacp_monitor_start = NULL,
-                                    .mdns_dacp_monitor_set_id = NULL,
-                                    .mdns_dacp_monitor_stop = NULL};
-
-mdns_backend mdns_external_dns_sd = {.name = "external-dns-sd",
-                                     .mdns_register = mdns_external_dns_sd_register,
-                                     .mdns_unregister = kill_mdns_child,
-                                     .mdns_dacp_monitor_start = NULL,
+mdns_backend mdns_external_avahi = { .name                     = "external-avahi",
+                                     .mdns_register            = mdns_external_avahi_register,
+                                     .mdns_unregister          = kill_mdns_child,
+                                     .mdns_dacp_monitor_start  = NULL,
                                      .mdns_dacp_monitor_set_id = NULL,
-                                     .mdns_dacp_monitor_stop = NULL};
+                                     .mdns_dacp_monitor_stop   = NULL };
+
+mdns_backend mdns_external_dns_sd = { .name                     = "external-dns-sd",
+                                      .mdns_register            = mdns_external_dns_sd_register,
+                                      .mdns_unregister          = kill_mdns_child,
+                                      .mdns_dacp_monitor_start  = NULL,
+                                      .mdns_dacp_monitor_set_id = NULL,
+                                      .mdns_dacp_monitor_stop   = NULL };

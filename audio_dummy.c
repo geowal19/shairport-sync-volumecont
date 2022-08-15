@@ -34,31 +34,41 @@
 #include <sys/time.h>
 #include <unistd.h>
 
-static int init(__attribute__((unused)) int argc, __attribute__((unused)) char **argv) { return 0; }
-
-static void deinit(void) {}
-
-static void start(int sample_rate, __attribute__((unused)) int sample_format) {
-  debug(1, "dummy audio output started at %d frames per second.", sample_rate);
+static int init(__attribute__((unused)) int argc, __attribute__((unused)) char * * argv)
+{
+    return 0;
 }
 
-static int play(__attribute__((unused)) void *buf, __attribute__((unused)) int samples) {
-  return 0;
+static void deinit(void)
+{
 }
 
-static void stop(void) { debug(1, "dummy audio stopped\n"); }
+static void start(int sample_rate, __attribute__((unused)) int sample_format)
+{
+    debug(1, "dummy audio output started at %d frames per second.", sample_rate);
+}
 
-audio_output audio_dummy = {.name = "dummy",
-                            .help = NULL,
-                            .init = &init,
-                            .deinit = &deinit,
-                            .prepare = NULL,
-                            .start = &start,
-                            .stop = &stop,
-                            .is_running = NULL,
-                            .flush = NULL,
-                            .delay = NULL,
-                            .play = &play,
-                            .volume = NULL,
-                            .parameters = NULL,
-                            .mute = NULL};
+static int play(__attribute__((unused)) void * buf, __attribute__((unused)) int samples)
+{
+    return 0;
+}
+
+static void stop(void)
+{
+    debug(1, "dummy audio stopped\n");
+}
+
+audio_output audio_dummy = { .name       = "dummy",
+                             .help       = NULL,
+                             .init       = &init,
+                             .deinit     = &deinit,
+                             .prepare    = NULL,
+                             .start      = &start,
+                             .stop       = &stop,
+                             .is_running = NULL,
+                             .flush      = NULL,
+                             .delay      = NULL,
+                             .play       = &play,
+                             .volume     = NULL,
+                             .parameters = NULL,
+                             .mute       = NULL };
